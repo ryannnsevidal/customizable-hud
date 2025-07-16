@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: hud-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: era_user
+      POSTGRES_PASSWORD: era_pass
+      POSTGRES_DB: era_db
+    ports:
+      - "5433:5433"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
