@@ -3,15 +3,17 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import admin from 'firebase-admin';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import hudRoutes from './routes/hud.js';
-import serviceAccount from '../firebaseServiceAccountKey.json' assert { type: 'json' };
+// FIX: Use require for JSON import
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const serviceAccount = require('../firebaseServiceAccountKey.json');
 import { Pool } from 'pg';
 
 dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Use CommonJS globals for __filename and __dirname
+// (No need for fileURLToPath or import.meta.url in CommonJS)
+// __filename and __dirname are available by default in CommonJS
 
 const app = express();
 
