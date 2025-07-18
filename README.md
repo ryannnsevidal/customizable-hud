@@ -44,7 +44,7 @@ Repo: [https://github.com/ryannnsevidal/customizable-hud](https://github.com/rya
      "hudMetrics": ["speed", "heart_rate", "cadence"]
    }
    ```
-
+![Blue](Bleutooth.png)
 4. **Bluetooth Sync**  
    Once the smart glasses are powered and connected, the app:
    - Scans and connects via BLE
@@ -66,7 +66,7 @@ Repo: [https://github.com/ryannnsevidal/customizable-hud](https://github.com/rya
 | CADENCE: 88 rpm          |
 +--------------------------+
 ```
-
+![Expected](expected.png)
 ## Bluetooth Implementation
 
 This project uses `react-native-ble-plx` for BLE functionality.
