@@ -23,12 +23,38 @@ import {
   Layers,
   Battery
 } from "lucide-react";
+
 import heroImage from "@/assets/hero-cycling-glasses.jpg";
 import architectureImage from "@/assets/system-architecture.jpg";
 import mobileUIImage from "@/assets/mobile-ui-mockup.jpg";
 import hudViewImage from "@/assets/glasses-hud-view.jpg";
 
+import { useAuth } from "../hooks/useAuth";
+import { db } from "../firebase";
+import { doc, setDoc } from "firebase/firestore";
+import { useState } from "react";
+
 const Index = () => {
+  const { user, login, logout } = useAuth();
+  const [hudSettings, setHudSettings] = useState({ metrics: ["speed", "heart_rate", "cadence"] });
+  const [saving, setSaving] = useState(false);
+
+  // Save HUD settings to Firestore for the logged-in user
+  const saveSettings = async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      await setDoc(doc(db, "userSettings", user.uid), {
+        hudCustomization: hudSettings,
+        lastUpdated: new Date().toISOString(),
+      });
+      alert("Settings saved to your account.");
+    } catch (e) {
+      alert("Error saving settings.");
+    }
+    setSaving(false);
+  };
+
   return (
     <div className="min-h-screen bg-surface-gradient">
       {/* Hero Section */}
@@ -52,42 +78,66 @@ const Index = () => {
             <br />
             through smart glasses integration
           </p>
-          <Button 
-            size="lg" 
-            className="bg-white text-primary hover:bg-white/90 shadow-glow"
-          >
-            Explore the Proposal
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
+          {!user ? (
+            <Button size="lg" className="bg-white text-primary hover:bg-white/90 shadow-glow" onClick={login}>
+              Sign in with Google
+            </Button>
+          ) : (
+            <div className="flex flex-col items-center gap-4">
+              <div className="text-lg">Signed in as {user.displayName || user.email}</div>
+              <Button size="sm" variant="outline" onClick={logout}>Sign Out</Button>
+            </div>
+          )}
         </div>
       </section>
 
-      {/* Table of Contents */}
-      <section className="py-16 px-6 max-w-6xl mx-auto">
-        <Card className="shadow-custom-lg border-0">
-          <CardHeader className="text-center">
-            <CardTitle className="text-3xl">Proposal Overview</CardTitle>
-            <CardDescription className="text-lg">
-              A comprehensive technical proposal for smart glasses HUD customization
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-3 gap-6">
-              {[
-                { icon: Lightbulb, title: "Why Option C?", desc: "Strategic reasoning and user value" },
-                { icon: Settings, title: "System Design", desc: "Architecture and technical specifications" },
-                { icon: Users, title: "User Experience", desc: "Journey mapping and interface design" }
-              ].map((item, index) => (
-                <div key={index} className="text-center p-6 rounded-lg bg-muted/50 hover:bg-muted transition-smooth">
-                  <item.icon className="h-12 w-12 mx-auto mb-4 text-primary" />
-                  <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
-                  <p className="text-muted-foreground">{item.desc}</p>
+      {/* Only show HUD customization if logged in */}
+      {user && (
+        <section className="py-16 px-6 max-w-6xl mx-auto">
+          <Card className="shadow-custom-lg border-0">
+            <CardHeader className="text-center">
+              <CardTitle className="text-3xl">Customize Your HUD</CardTitle>
+              <CardDescription className="text-lg">
+                Select up to three metrics to display on your glasses. Your choices are saved to your account.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col items-center gap-6">
+                <div className="flex gap-4">
+                  {["speed", "heart_rate", "cadence", "power", "distance", "time"].map(metric => (
+                    <Button
+                      key={metric}
+                      variant={hudSettings.metrics.includes(metric) ? "default" : "outline"}
+                      disabled={
+                        !hudSettings.metrics.includes(metric) && hudSettings.metrics.length >= 3
+                      }
+                      onClick={() => {
+                        setHudSettings(prev => {
+                          const exists = prev.metrics.includes(metric);
+                          if (exists) {
+                            return { ...prev, metrics: prev.metrics.filter(m => m !== metric) };
+                          } else if (prev.metrics.length < 3) {
+                            return { ...prev, metrics: [...prev.metrics, metric] };
+                          }
+                          return prev;
+                        });
+                      }}
+                    >
+                      {metric.replace("_", " ").toUpperCase()}
+                    </Button>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </section>
+                <div className="mt-4">
+                  <strong>Selected:</strong> {hudSettings.metrics.map(m => m.replace("_", " ")).join(", ")}
+                </div>
+                <Button onClick={saveSettings} disabled={saving} className="mt-4">
+                  {saving ? "Saving..." : "Save HUD Settings"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+      )}
 
       {/* Introduction */}
       <section id="introduction" className="py-16 px-6 max-w-6xl mx-auto">
