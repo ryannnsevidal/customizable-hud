@@ -28,7 +28,7 @@ Repo: [https://github.com/ryannnsevidal/customizable-hud](https://github.com/rya
 | HUD Preview / Simulated Data |
 +-------------------------------+
 ```
-
+![System](System-Arch.png)
 ## Feature Workflow
 
 1. **Initialization**  
