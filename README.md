@@ -143,12 +143,6 @@ useEffect(() => {
 - Real sensor data integration
 - Additional error handling for mid-ride disconnects
 
-## Resources for Diagrams
-
-- https://excalidraw.com
-- https://draw.io
-- https://lucidchart.com (free tier)
-
 ## For Reviewers
 
 This repo contains the front-end and preview logic for HUD customization. BLE connection and configuration sync logic is laid out and ready for integration. The UX is structured to be intuitive and clean, especially for riders adjusting settings on the go.
