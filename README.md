@@ -1,153 +1,156 @@
-# Customizable HUD Project
+# HUD Customization Feature – Era Smart Glasses
 
-A full-stack application for customizing HUD (Head-Up Display) data visualization for cycling glasses.
+This project demonstrates a customizable heads-up display (HUD) for smart cycling glasses, allowing users to control which performance metrics appear during a ride.
 
-## Architecture
+The core idea is to let cyclists use a mobile app to select the top three metrics they want to see (e.g., speed, heart rate, cadence). These preferences are stored locally and transmitted via Bluetooth Low Energy (BLE) to the glasses, which render the chosen data in real-time.
 
-- **Frontend**: React + TypeScript + Vite + Tailwind CSS
-- **Backend**: Node.js + Express + TypeScript
-- **Database**: PostgreSQL
-- **Authentication**: Firebase Admin SDK
-- **Deployment**: Google Cloud + Firebase Hosting
+## Why This Project
 
-## Quick Start
+Customizability enhances user experience. Instead of showing the same fixed stats for everyone, this feature gives each rider the ability to define what's most important to them. The UI was built with simplicity in mind—easy metric selection and a preview panel for reassurance before riding.
 
-### Local Development
+Repo: [https://github.com/ryannnsevidal/customizable-hud](https://github.com/ryannnsevidal/customizable-hud)
 
-1. **Start Backend**:
-```bash
-cd back_end
-npm install
-npm start
-```
-
-2. **Start Frontend**:
-```bash
-cd front_end/ride-hud-joyride-setup-main
-npm install
-npm run dev
-```
-
-3. Access Application:
-   - Frontend: http://localhost:5173
-   - Backend API: http://localhost:4000/api/user/hud
-
-### Docker Setup
-
-```bash
-cd back_end
-docker compose up --build
-```
-
-## Project Structure
+## System Architecture
 
 ```
-customizable-hud/
-├── back_end/
-│   ├── src/
-│   │   ├── index.ts
-│   │   └── routes/
-│   │       └── hud.ts
-│   ├── package.json
-│   ├── Dockerfile
-│   └── docker-compose.yml
-├── front_end/
-│   └── ride-hud-joyride-setup-main/
-│       ├── src/
-│       │   ├── App.tsx
-│       │   ├── pages/
-│       │   └── components/
-│       └── package.json
-├── firebase.json
-├── .firebaserc
-└── DEPLOYMENT_GUIDE.md
++--------------------+           Bluetooth           +--------------------+
+|     Mobile App     | <--------------------------> |   Smart Glasses     |
++--------------------+                              +--------------------+
+        |                                                  ^
+        | (AsyncStorage)                                   |
+        v                                                  |
++------------------------+                          +----------------------+
+| HUD Settings Component |                          |   BLE GATT Service   |
++------------------------+                          |  - Accepts config    |
+        |                                            |  - Displays metrics  |
+        v                                            +----------------------+
++-------------------------------+
+| HUD Preview / Simulated Data |
++-------------------------------+
 ```
 
-## Deployment
+## Feature Workflow
 
-### Firebase Hosting (Frontend)
-```bash
-npm run build
-firebase deploy
+1. **Initialization**  
+   The user launches the app and navigates to the HUD settings page. A list of metrics is displayed.
+
+2. **User Selection**  
+   Up to three metrics can be selected. A HUD preview updates in real-time to reflect choices.
+
+3. **Configuration Storage**  
+   User choices are saved using `AsyncStorage` in this format:
+   ```json
+   {
+     "hudMetrics": ["speed", "heart_rate", "cadence"]
+   }
+   ```
+
+4. **Bluetooth Sync**  
+   Once the smart glasses are powered and connected, the app:
+   - Scans and connects via BLE
+   - Discovers GATT services
+   - Writes the selected metrics to a writable characteristic
+
+5. **Ride Time**  
+   During the ride, the app streams real-time data to the glasses. Only the selected metrics are shown.
+
+6. **Handling Edge Cases**  
+   If a selected metric isn’t available (e.g., power meter is missing), it is substituted with a default. If the Bluetooth connection drops, the last known config is preserved or an alert is issued.
+
+## HUD Preview Example
+
+```
++--------------------------+
+| SPEED: 22.5 km/h         |
+| HEART RATE: 145 bpm      |
+| CADENCE: 88 rpm          |
++--------------------------+
 ```
 
-### Google Cloud Run (Backend)
-```bash
-gcloud run deploy hud-backend --source . --platform managed
+## Bluetooth Implementation
+
+This project uses `react-native-ble-plx` for BLE functionality.
+
+### Scan and Connect
+```js
+const manager = new BleManager();
+
+manager.onStateChange((state) => {
+  if (state === 'PoweredOn') {
+    manager.startDeviceScan(null, null, (error, device) => {
+      if (device.name?.includes('EraGlasses')) {
+        manager.stopDeviceScan();
+        device.connect().then((d) => d.discoverAllServicesAndCharacteristics());
+      }
+    });
+  }
+});
 ```
 
-### Complete Guide
-See [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) for detailed deployment instructions.
+### Transmit HUD Configuration
+```js
+const configJSON = JSON.stringify({ hudMetrics: ["speed", "heart_rate", "cadence"] });
+const encoded = Buffer.from(configJSON).toString('base64');
 
-## Testing
-
-### API Testing
-```bash
-curl http://localhost:4000/api/user/hud
+await device.writeCharacteristicWithResponseForService(
+  'SERVICE_UUID',
+  'CHARACTERISTIC_UUID',
+  encoded
+);
 ```
 
-### Frontend Testing
-```bash
-npm run build
-npm run preview
+## Sensor Availability Check
+
+Before sending configuration to the glasses, the app checks whether selected metrics are supported by available sensors.
+
+Example logic:
+```js
+const isSensorAvailable = (sensorType) =>
+  connectedDevices.some((device) => device.name.includes(sensorType));
+
+const validatedMetrics = selectedMetrics.filter(isSensorAvailable);
 ```
 
-## Environment Variables
+## Simulated Data (for Preview Testing)
 
-### Backend (.env)
+To demonstrate HUD updates without real sensors, random values are generated:
+
+```js
+useEffect(() => {
+  const interval = setInterval(() => {
+    setPreviewData({
+      speed: (Math.random() * 40).toFixed(1),
+      heart_rate: Math.floor(Math.random() * 70 + 100),
+      cadence: Math.floor(Math.random() * 90 + 60),
+    });
+  }, 1000);
+  return () => clearInterval(interval);
+}, []);
 ```
-PORT=4000
-DATABASE_URL=postgresql://user:password@localhost:5432/era_db
-FIREBASE_PROJECT_ID=customize-hud
-```
 
-### Production
-- Configure Cloud SQL for database
-- Set up Firebase project
-- Update environment variables for production
+## Tech Stack and Decisions
 
-## Features
+| Layer         | Technology             | Reason                                |
+|---------------|-------------------------|----------------------------------------|
+| Frontend      | React Native            | Cross-platform, supports BLE           |
+| Storage       | AsyncStorage            | Lightweight, persistent on-device      |
+| Bluetooth API | react-native-ble-plx    | Active maintenance, broad device support |
+| Format        | JSON                    | Readable and easy to encode/decode     |
 
-- **HUD Customization Interface**: Interactive UI for customizing display elements
-- **Real-time Data**: Live updates for cycling metrics
-- **Responsive Design**: Works on desktop and mobile
-- **Firebase Integration**: Authentication and data storage
-- **Docker Support**: Containerized deployment
+## Next Steps / In Progress
 
-## Security
+- BLE UUIDs to be finalized using the Era SDK or GATT explorer
+- Real sensor data integration
+- Additional error handling for mid-ride disconnects
 
-- Firebase Authentication
-- Environment variable management
-- CORS configuration
-- Input validation
+## Resources for Diagrams
 
-## Monitoring
+- https://excalidraw.com
+- https://draw.io
+- https://lucidchart.com (free tier)
 
-- Google Cloud Monitoring
-- Firebase Analytics
-- Error tracking
-- Performance monitoring
+## For Reviewers
 
-## Contributing
+This repo contains the front-end and preview logic for HUD customization. BLE connection and configuration sync logic is laid out and ready for integration. The UX is structured to be intuitive and clean, especially for riders adjusting settings on the go.
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License.
-
-## Support
-
-For issues and questions:
-1. Check the deployment guide
-2. Review the project structure
-3. Test locally first
-4. Check logs for errors
-
----
-
-Status: Ready for production deployment
+If you'd like visuals added or this turned into a demo-ready PDF, feel free to request it.
