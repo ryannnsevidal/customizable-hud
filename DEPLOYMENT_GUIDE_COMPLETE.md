@@ -58,7 +58,7 @@ gcloud run deploy hud-backend \
 
 ### Step 5: Build and Deploy Frontend
 ```bash
-cd front_end/ride-hud-joyride-setup-main
+cd front_end/back_end/both
 npm run build
 firebase deploy --only hosting
 ```

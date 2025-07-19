@@ -1,0 +1,181 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* HUD Design System - Cycling Smart Glasses Interface
+All colors MUST be HSL. Designed for high contrast and readability.
+*/
+
+@layer base {
+  :root {
+    /* Base colors */
+    --background: 220 15% 8%;
+    --foreground: 210 40% 98%;
+
+    /* HUD-specific colors */
+    --hud-primary: 195 95% 65%;
+    --hud-primary-foreground: 220 15% 8%;
+    --hud-secondary: 45 95% 65%;
+    --hud-secondary-foreground: 220 15% 8%;
+    --hud-success: 142 95% 65%;
+    --hud-warning: 25 95% 65%;
+    --hud-danger: 0 95% 65%;
+    
+    /* Glass/overlay effects */
+    --hud-glass: 220 15% 15%;
+    --hud-glass-border: 210 40% 25%;
+    --hud-overlay: 220 15% 8% / 0.9;
+    
+    /* Metric display colors */
+    --metric-speed: 195 95% 65%;
+    --metric-heart: 0 95% 65%;
+    --metric-cadence: 45 95% 65%;
+    --metric-power: 280 95% 65%;
+    
+    /* Traditional shadcn tokens adapted for HUD */
+    --card: 220 15% 12%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 220 15% 12%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 195 95% 65%;
+    --primary-foreground: 220 15% 8%;
+
+    --secondary: 220 15% 15%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 220 15% 15%;
+    --muted-foreground: 215.4 16.3% 65%;
+
+    --accent: 195 95% 65%;
+    --accent-foreground: 220 15% 8%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 15% 20%;
+    --input: 220 15% 15%;
+    --ring: 195 95% 65%;
+
+    --radius: 0.75rem;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--hud-primary)), hsl(var(--hud-secondary)));
+    --gradient-glass: linear-gradient(135deg, hsl(var(--hud-glass)) 0%, hsl(var(--hud-glass)) / 0.8 100%);
+    --gradient-metric: linear-gradient(90deg, hsl(var(--metric-speed)) 0%, hsl(var(--metric-cadence)) 100%);
+    
+    /* Shadows and glows */
+    --shadow-hud: 0 0 30px hsl(var(--hud-primary) / 0.3);
+    --shadow-metric: 0 0 20px hsl(var(--metric-speed) / 0.4);
+    --glow-active: 0 0 40px hsl(var(--hud-primary) / 0.6);
+    
+    /* Typography */
+    --font-mono: 'JetBrains Mono', 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+    --font-display: 'Inter', system-ui, sans-serif;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    /* Dark mode uses same HUD colors as they're designed for dark environments */
+    --background: 220 15% 8%;
+    --foreground: 210 40% 98%;
+    
+    /* Sidebar tokens for compatibility */
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-family: var(--font-display);
+  }
+  
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+  
+  .font-display {
+    font-family: var(--font-display);
+  }
+}
+
+@layer components {
+  /* HUD Component Styles */
+  .hud-glass {
+    background: var(--gradient-glass);
+    border: 1px solid hsl(var(--hud-glass-border));
+    backdrop-filter: blur(12px);
+    box-shadow: var(--shadow-hud);
+  }
+  
+  .hud-metric {
+    @apply font-mono text-2xl font-bold;
+    color: hsl(var(--metric-speed));
+    text-shadow: 0 0 10px hsl(var(--metric-speed) / 0.5);
+  }
+  
+  .hud-metric-label {
+    @apply text-xs uppercase tracking-wider;
+    color: hsl(var(--muted-foreground));
+    opacity: 0.8;
+  }
+  
+  .hud-active {
+    box-shadow: var(--glow-active);
+    transform: scale(1.02);
+    transition: all 0.3s ease;
+  }
+  
+  .pulse-metric {
+    animation: pulse-glow 2s ease-in-out infinite alternate;
+  }
+}
+
+@layer utilities {
+  .text-metric-speed { color: hsl(var(--metric-speed)); }
+  .text-metric-heart { color: hsl(var(--metric-heart)); }
+  .text-metric-cadence { color: hsl(var(--metric-cadence)); }
+  .text-metric-power { color: hsl(var(--metric-power)); }
+  
+  .border-metric-speed { border-color: hsl(var(--metric-speed)); }
+  .border-metric-heart { border-color: hsl(var(--metric-heart)); }
+  .border-metric-cadence { border-color: hsl(var(--metric-cadence)); }
+  .border-metric-power { border-color: hsl(var(--metric-power)); }
+}
+
+@keyframes pulse-glow {
+  0% { 
+    box-shadow: 0 0 20px hsl(var(--hud-primary) / 0.3);
+  }
+  100% { 
+    box-shadow: 0 0 40px hsl(var(--hud-primary) / 0.6);
+  }
+}

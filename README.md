@@ -1,8 +1,8 @@
-# HUD Customization Feature – Era Smart Glasses
+# Customizable HUD for Smart Cycling Glasses
 
 This project demonstrates a customizable heads-up display (HUD) for smart cycling glasses, allowing users to control which performance metrics appear during a ride.
 
-The core idea is to let cyclists use a mobile app to select the top three metrics they want to see (e.g., speed, heart rate, cadence). These preferences are stored locally and transmitted via Bluetooth Low Energy (BLE) to the glasses, which render the chosen data in real-time.
+The core idea is to let cyclists use a web interface to select and customize the metrics they want to see (e.g., speed, heart rate, cadence, power). These preferences are stored locally and can be transmitted via Bluetooth Low Energy (BLE) to smart glasses, which render the chosen data in real-time.
 
 ## Why This Project
 
@@ -14,10 +14,10 @@ Repo: [https://github.com/ryannnsevidal/customizable-hud](https://github.com/rya
 
 ```
 +--------------------+           Bluetooth           +--------------------+
-|     Mobile App     | <--------------------------> |   Smart Glasses     |
+|     Web App        | <--------------------------> |   Smart Glasses     |
 +--------------------+                              +--------------------+
         |                                                  ^
-        | (AsyncStorage)                                   |
+        | (Local Storage)                                  |
         v                                                  |
 +------------------------+                          +----------------------+
 | HUD Settings Component |                          |   BLE GATT Service   |
@@ -32,16 +32,16 @@ Repo: [https://github.com/ryannnsevidal/customizable-hud](https://github.com/rya
 ## Feature Workflow
 
 1. **Initialization**  
-   The user launches the app and navigates to the HUD settings page. A list of metrics is displayed.
+   The user launches the web app and navigates to the HUD settings page. A list of metrics is displayed.
 
 2. **User Selection**  
-   Up to three metrics can be selected. A HUD preview updates in real-time to reflect choices.
+   Multiple metrics can be selected. A HUD preview updates in real-time to reflect choices.
 
 3. **Configuration Storage**  
-   User choices are saved using `AsyncStorage` in this format:
+   User choices are saved using `localStorage` in this format:
    ```json
    {
-     "hudMetrics": ["speed", "heart_rate", "cadence"]
+     "hudMetrics": ["speed", "heartRate", "cadence", "power"]
    }
    ```
 ![Blue](Bleutooth.png)
@@ -69,34 +69,29 @@ Repo: [https://github.com/ryannnsevidal/customizable-hud](https://github.com/rya
 ![Expected](expected.png)
 ## Bluetooth Implementation
 
-This project uses `react-native-ble-plx` for BLE functionality.
+This project uses the Web Bluetooth API for BLE functionality.
 
 ### Scan and Connect
 ```js
-const manager = new BleManager();
-
-manager.onStateChange((state) => {
-  if (state === 'PoweredOn') {
-    manager.startDeviceScan(null, null, (error, device) => {
-      if (device.name?.includes('EraGlasses')) {
-        manager.stopDeviceScan();
-        device.connect().then((d) => d.discoverAllServicesAndCharacteristics());
-      }
-    });
-  }
+navigator.bluetooth.requestDevice({
+  filters: [{ namePrefix: 'EraGlasses' }],
+  optionalServices: ['hud-service-uuid']
+}).then(device => {
+  return device.gatt.connect();
+}).then(server => {
+  return server.getPrimaryService('hud-service-uuid');
 });
 ```
 
 ### Transmit HUD Configuration
 ```js
-const configJSON = JSON.stringify({ hudMetrics: ["speed", "heart_rate", "cadence"] });
-const encoded = Buffer.from(configJSON).toString('base64');
+const configJSON = JSON.stringify({ 
+  hudMetrics: ["speed", "heartRate", "cadence", "power"] 
+});
+const encoder = new TextEncoder();
+const data = encoder.encode(configJSON);
 
-await device.writeCharacteristicWithResponseForService(
-  'SERVICE_UUID',
-  'CHARACTERISTIC_UUID',
-  encoded
-);
+await characteristic.writeValue(data);
 ```
 
 ## Sensor Availability Check
@@ -132,10 +127,39 @@ useEffect(() => {
 
 | Layer         | Technology             | Reason                                |
 |---------------|-------------------------|----------------------------------------|
-| Frontend      | React Native            | Cross-platform, supports BLE           |
-| Storage       | AsyncStorage            | Lightweight, persistent on-device      |
-| Bluetooth API | react-native-ble-plx    | Active maintenance, broad device support |
+| Frontend      | React + TypeScript      | Modern web tech, supports Web Bluetooth|
+| UI Library    | Tailwind CSS + shadcn  | Beautiful, customizable components     |
+| Storage       | localStorage            | Persistent browser storage             |
+| Bluetooth API | Web Bluetooth API       | Native browser BLE support             |
+| Build Tool    | Vite                    | Fast development and building          |
 | Format        | JSON                    | Readable and easy to encode/decode     |
+
+## Getting Started
+
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn
+
+### Installation
+```bash
+cd /workspaces/customizable-hud/front_end/back_end/both
+npm install
+```
+
+### Development
+```bash
+npm run dev
+```
+
+### Build for Production
+```bash
+npm run build
+```
+
+### Docker Deployment
+```bash
+docker-compose up --build
+```
 
 ## Next Steps / In Progress
 
@@ -145,6 +169,13 @@ useEffect(() => {
 
 ## For Reviewers
 
-This repo contains the front-end and preview logic for HUD customization. BLE connection and configuration sync logic is laid out and ready for integration. The UX is structured to be intuitive and clean, especially for riders adjusting settings on the go.
+This repo contains the web-based HUD customization interface and preview logic. Web Bluetooth connection and configuration sync logic is implemented and ready for integration with compatible smart glasses. The UX is structured to be intuitive and clean, especially for riders adjusting settings before their ride.
 
-If you'd like visuals added or this turned into a demo-ready PDF, feel free to request it.
+The application features:
+- Real-time HUD preview with simulated cycling data
+- Customizable metric selection (speed, heart rate, cadence, power)
+- Multiple layout options (grid, horizontal, vertical, compact)
+- Bluetooth integration capabilities
+- Docker containerization for easy deployment
+
+If you'd like additional features added or this turned into a demo-ready deployment, feel free to request it.

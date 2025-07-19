@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": "front_end/ride-hud-joyride-setup-main/dist",
+    "public": "front_end/back_end/both/dist",
     "ignore": [
       "firebase.json",
       "**/.*",
